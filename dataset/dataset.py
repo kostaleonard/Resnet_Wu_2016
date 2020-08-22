@@ -19,7 +19,7 @@ class Dataset:
 
     def __init__(self, path: str) -> None:
         """Instantiates the object.
-        :param path: the path to the dataset, if it exists, or the path
+        :param path: the path to the dataset if it exists, or the path
         to which the root directory should be saved.
         """
         self.path: str = path
@@ -38,5 +38,5 @@ class Dataset:
         if not os.path.isdir(self.path):
             raise NotADirectoryError('{0} is not a directory.'.format(
                 self.path))
-        # TODO check for dataset. If not found, download.
+        # TODO check for dataset. If not found, download. Ask for user confirmation because imagenet is so huge.
         # TODO fill partition and labels.
