@@ -1,12 +1,10 @@
 """Trains the model."""
 
-# Random seeds need to be set up at program launch, before other
-# imports, because some libraries use random initialization.
-from numpy.random import seed
+from util.util import set_random_seed
 USE_RANDOM_SEED = True
-RANDOM_SEED = 52017
 if USE_RANDOM_SEED:
-    seed(RANDOM_SEED)
+    set_random_seed()
+# pylint: disable=wrong-import-position
 from models.model import Model
 
 

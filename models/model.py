@@ -23,7 +23,7 @@ class Model:
         """Saves the model to the given filename."""
         raise NotImplementedError('Method is abstract.')
 
-    def save_to_dir(self, dir: str) -> None:
+    def save_to_dir(self, directory: str) -> None:
         """Saves the model to the given directory. Automatically gives
         the model a unique filename."""
         raise NotImplementedError('Method is abstract.')
