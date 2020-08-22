@@ -38,5 +38,3 @@ class Dataset:
         if not os.path.isdir(self.path):
             raise NotADirectoryError('{0} is not a directory.'.format(
                 self.path))
-        # TODO check for dataset. If not found, download. Ask for user confirmation because imagenet is so huge.
-        # TODO fill partition and labels.
