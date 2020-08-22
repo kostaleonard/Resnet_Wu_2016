@@ -1,9 +1,15 @@
 all: train
 
 train:
-	# TODO
 	@echo "Not yet implemented."
+	# TODO training
 
-test:
-	# TODO
+pytest:
+	@echo "Running linting scripts."
+	-pylint dataset
+	-pylint models
+	-pylint test
+	-pylint training
+	-pylint util
 	@echo "Running unit tests."
+	# TODO unit tests
