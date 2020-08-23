@@ -1,4 +1,4 @@
-"""The ILSVRC2012 dataset."""
+"""ILSVRCDataset class."""
 
 from dataset.dataset import Dataset
 

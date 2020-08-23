@@ -1,0 +1,4 @@
+[default]
+entity = kostaleonard
+project = resnet-wu-2016
+base_url = https://api.wandb.ai

@@ -1,16 +1,17 @@
-"""Contains the Dataset class."""
+"""Dataset class."""
 
 import os
-from typing import Dict, List
+from typing import Dict
+import numpy as np
 
 VERBOSE: bool = True
 TRAIN_KEY: str = 'train'
 VAL_KEY: str = 'val'
 TEST_KEY: str = 'test'
-EMPTY_PARTITION: Dict[str, List[str]] = {
-    TRAIN_KEY: [],
-    VAL_KEY: [],
-    TEST_KEY: []
+EMPTY_PARTITION: Dict[str, np.ndarray] = {
+    TRAIN_KEY: np.arange(0, dtype='str'),
+    VAL_KEY: np.arange(0, dtype='str'),
+    TEST_KEY: np.arange(0, dtype='str')
 }
 
 
@@ -23,12 +24,21 @@ class Dataset:
         to which the root directory should be saved.
         """
         self.path: str = path
-        self.partition: Dict[str, List[str]] = EMPTY_PARTITION
-        self.labels: Dict[str, int] = {}
+        self.partition: Dict[str, np.ndarray] = EMPTY_PARTITION
+        self._labels: Dict[str, int] = {}
         self._load_or_download_dataset(verbose=VERBOSE)
+
+    def get_labels(self, x_filenames: np.ndarray) -> np.ndarray:
+        """Returns an np.ndarray of ints representing the labels for
+        the given filenames.
+        :param x_filenames: the names of the training files.
+        :return: the labels, in the same order as the filenames.
+        """
+        return np.array([self._labels[fname] for fname in x_filenames])
 
     def _load_or_download_dataset(self, verbose: bool = False) -> None:
         """Loads the dataset from a pre-existing path, or downloads it.
+        Subclasses should override.
         :param verbose: whether to print info to stdout.
         """
         if not os.path.exists(self.path):
