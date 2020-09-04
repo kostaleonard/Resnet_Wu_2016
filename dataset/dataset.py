@@ -25,9 +25,9 @@ class Dataset:
         """
         self.path: str = path
         self.partition: Dict[str, np.ndarray] = EMPTY_PARTITION
-        self.labels: Dict[str, int] = {}
-        self.class_mapping: List[str] = []
-        self.inverse_mapping: Dict[str, int] = {}
+        self._labels: Dict[str, int] = {}
+        self.label_to_classname: List[str] = []
+        self.classname_to_label: Dict[str, int] = {}
         self._load_or_download_dataset(verbose=VERBOSE)
 
     def get_labels(self, x_filenames: np.ndarray) -> np.ndarray:
@@ -36,7 +36,7 @@ class Dataset:
         :param x_filenames: the names of the training files.
         :return: the labels, in the same order as the filenames.
         """
-        return np.array([self.labels[fname] for fname in x_filenames])
+        return np.array([self._labels[fname] for fname in x_filenames])
 
     def _load_or_download_dataset(self, verbose: bool = False) -> None:
         """Loads the dataset from a pre-existing path, or downloads it.
