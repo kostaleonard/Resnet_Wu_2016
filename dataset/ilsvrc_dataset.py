@@ -15,13 +15,15 @@ DEFAULT_DATASET_PATH = os.path.join(
     'ILSVRC2012'
 )
 CLASS_MAPPING_DIR = 'class_mapping'
-WORDS_FILENAME = 'words.txt'
+WORDS_FILENAME = os.path.join(CLASS_MAPPING_DIR, 'words.txt')
+WNIDS_FILENAME = os.path.join(CLASS_MAPPING_DIR, 'wnids.txt')
 VAL_LABELS_FILE = os.path.join(
     'devkit-1.0',
     'data',
     'ILSVRC2010_validation_ground_truth.txt'
 )
 EXPECTED_NUM_CLASSES = 1000
+NULL_LABEL = 'NULL'
 
 
 class ILSVRCDataset(Dataset):
@@ -63,8 +65,7 @@ class ILSVRCDataset(Dataset):
         are class names.
         """
         full_mapping = {}
-        with open(os.path.join(self.path, CLASS_MAPPING_DIR, WORDS_FILENAME)) \
-                as infile:
+        with open(os.path.join(self.path, WORDS_FILENAME)) as infile:
             for line in infile.readlines():
                 pair = line.split('\t')
                 if len(pair) != 2:
@@ -74,20 +75,37 @@ class ILSVRCDataset(Dataset):
                 full_mapping[synid] = classname
         return full_mapping
 
+    def _get_wnid_to_label(self) -> Dict[str, int]:
+        """Returns the dict mapping synset ID (also WNID) to label
+        number. Fixed ImageNet's scheme to be zero-indexed.
+        :return: the WNID/synset ID to label dict.
+        """
+        wnid_to_label = {}
+        with open(os.path.join(self.path, WNIDS_FILENAME)) as infile:
+            lines = infile.readlines()
+            for idx, line in enumerate(lines):
+                wnid = line.split()[2].strip()
+                wnid_to_label[wnid] = idx
+        return wnid_to_label
+
     def _fill_label_mapping(self) -> None:
         """Fills self.label_to_classname, self.classname_to_label, and
         self._synid_to_classname."""
         full_mapping = self._get_full_synid_mapping()
-        sorted_synids = sorted(self._get_synids())
-        for i, synid in enumerate(sorted_synids):
+        used_synids = self._get_synids()
+        wnid_to_label = self._get_wnid_to_label()
+        self.label_to_classname = [NULL_LABEL for _ in range(
+            EXPECTED_NUM_CLASSES)]
+        for i, synid in enumerate(used_synids):
             classname = full_mapping[synid]
+            label = wnid_to_label[synid]
             self.synid_to_classname[synid] = classname
-            self.label_to_classname.append(classname)
+            self.label_to_classname[label] = classname
             if classname in self.classname_to_label:
                 raise ValueError(
                     'Class {0} already assigned to label {1}'.format(
                         classname, self.classname_to_label[classname]))
-            self.classname_to_label[classname] = i
+            self.classname_to_label[classname] = label
 
     def _fill_partition(self) -> None:
         """Fills self.partition and self._labels."""
@@ -95,7 +113,6 @@ class ILSVRCDataset(Dataset):
         train_dirs = self._get_train_dirs()
         for class_dir in train_dirs:
             class_path = os.path.join(self.path_train, class_dir)
-            # TODO make sure the files are actually images; could be a util function.
             for imfile in os.listdir(class_path):
                 imfile_path = os.path.join(class_path, imfile)
                 train_images.append(str(imfile_path))
@@ -105,7 +122,7 @@ class ILSVRCDataset(Dataset):
         self.partition[TRAIN_KEY] = np.array(train_images, dtype='str')
         val_images = []
         with open(os.path.join(self.path, VAL_LABELS_FILE)) as infile:
-            val_labels = [int(line.strip()) for line in infile.readlines()]
+            val_labels = [int(line.strip()) - 1 for line in infile.readlines()]
             val_imfiles = sorted(os.listdir(self.path_val))
             if len(val_labels) != len(val_imfiles):
                 raise ValueError(
