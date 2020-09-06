@@ -2,10 +2,18 @@
 
 import os
 import numpy as np
-from typing import Dict
+from typing import Dict, List
 
 from dataset.dataset import Dataset, TRAIN_KEY, VAL_KEY, TEST_KEY
 
+DEFAULT_DATASET_PATH = os.path.join(
+    '/',
+    'Users',
+    'leo',
+    'Documents',
+    'Datasets',
+    'ILSVRC2012'
+)
 CLASS_MAPPING_DIR = 'class_mapping'
 WORDS_FILENAME = 'words.txt'
 VAL_LABELS_FILE = os.path.join(
@@ -13,6 +21,7 @@ VAL_LABELS_FILE = os.path.join(
     'data',
     'ILSVRC2010_validation_ground_truth.txt'
 )
+EXPECTED_NUM_CLASSES = 1000
 
 
 class ILSVRCDataset(Dataset):
@@ -23,19 +32,39 @@ class ILSVRCDataset(Dataset):
         :param path: the path to the dataset if it exists, or the path
         to which the root directory should be saved.
         """
-        self.path_train: str = os.path.join(self.path, 'train')
-        self.path_val: str = os.path.join(self.path, 'val')
-        self.path_test: str = os.path.join(self.path, 'test')
+        self.path_train: str = os.path.join(path, 'train')
+        self.path_val: str = os.path.join(path, 'val')
+        self.path_test: str = os.path.join(path, 'test')
         self.synid_to_classname: Dict[str, str] = {}
         super().__init__(path)
 
-    def _fill_label_mapping(self):
-        """Fills self.label_to_classname, self.classname_to_label, and
-        self._synid_to_classname."""
-        sorted_synids = sorted(os.listdir(self.path_train))
+    def _get_train_dirs(self) -> List[str]:
+        """Returns a list of the training directories.
+        :return: the training directories, unsorted.
+        """
+        return [dirname for dirname in os.listdir(self.path_train)
+                if os.path.isdir(os.path.join(self.path_train, dirname))]
+
+    def _get_synids(self) -> List[str]:
+        """Returns the synset ID values by which classes are
+        identified. For example, 'n01484850' is a great white shark.
+        Because this is how the classes are determined for the training
+        images, this is the same as _get_train_dirs().
+        :return: the synset ID values of all classes, unsorted.
+        """
+        return self._get_train_dirs()
+
+    def _get_full_synid_mapping(self) -> Dict[str, str]:
+        """Returns the complete mapping from synset ID to class name.
+        This is found in the WORDS_FILENAME file. Only the 1000 IDs
+        used in the dataset are saved to synid_to_classname; this is
+        just a helper method to populate that dict.
+        :return: a dict where the keys are synset IDs and the values
+        are class names.
+        """
+        full_mapping = {}
         with open(os.path.join(self.path, CLASS_MAPPING_DIR, WORDS_FILENAME)) \
                 as infile:
-            full_mapping = {}
             for line in infile.readlines():
                 pair = line.split('\t')
                 if len(pair) != 2:
@@ -43,18 +72,30 @@ class ILSVRCDataset(Dataset):
                                      'found {0}.'.format(len(pair) - 1))
                 synid, classname = pair[0].strip(), pair[1].strip()
                 full_mapping[synid] = classname
-            for synid in sorted_synids:
-                classname = full_mapping[synid]
-                self.synid_to_classname[synid] = classname
-                self.label_to_classname.append(classname)
-                self.classname_to_label[classname] = \
-                    len(self.label_to_classname) - 1
+        return full_mapping
 
-    def _fill_partition(self):
+    def _fill_label_mapping(self) -> None:
+        """Fills self.label_to_classname, self.classname_to_label, and
+        self._synid_to_classname."""
+        full_mapping = self._get_full_synid_mapping()
+        sorted_synids = sorted(self._get_synids())
+        for i, synid in enumerate(sorted_synids):
+            classname = full_mapping[synid]
+            self.synid_to_classname[synid] = classname
+            self.label_to_classname.append(classname)
+            if classname in self.classname_to_label:
+                raise ValueError(
+                    'Class {0} already assigned to label {1}'.format(
+                        classname, self.classname_to_label[classname]))
+            self.classname_to_label[classname] = i
+
+    def _fill_partition(self) -> None:
         """Fills self.partition and self._labels."""
         train_images = []
-        for class_dir in os.listdir(self.path_train):
+        train_dirs = self._get_train_dirs()
+        for class_dir in train_dirs:
             class_path = os.path.join(self.path_train, class_dir)
+            # TODO make sure the files are actually images; could be a util function.
             for imfile in os.listdir(class_path):
                 imfile_path = os.path.join(class_path, imfile)
                 train_images.append(str(imfile_path))

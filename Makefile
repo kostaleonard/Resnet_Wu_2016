@@ -12,4 +12,5 @@ pytest:
 	-pylint training
 	-pylint util
 	@echo "Running unit tests."
+	-pytest test/test_ilsvrc_dataset.py
 	# TODO unit tests
