@@ -5,6 +5,7 @@ import numpy as np
 from typing import Dict, List
 
 from dataset.dataset import Dataset, TRAIN_KEY, VAL_KEY, TEST_KEY
+from dataset.image_dataset_sequence import ImageDatasetSequence
 
 DEFAULT_DATASET_PATH = os.path.join(
     '/',

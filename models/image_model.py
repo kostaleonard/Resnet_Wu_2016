@@ -3,11 +3,11 @@
 import numpy as np
 from typing import Tuple
 
-from models.model import Model
+from models.project_model import ProjectModel
 from util.util import normalize_images
 
 
-class ImageModel(Model):
+class ImageModel(ProjectModel):
     """Represents an ML model used on images."""
 
     def predict_on_image(self, image: np.ndarray) -> Tuple[str, float]:
@@ -20,5 +20,5 @@ class ImageModel(Model):
                                         batch_size=1).flatten()
         i = np.argmax(pred_raw)
         confidence = pred_raw[i]
-        pred_class = self.dataset.mapping[i]
+        pred_class = self.dataset.label_to_classname[i]
         return pred_class, confidence

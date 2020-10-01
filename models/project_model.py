@@ -1,7 +1,7 @@
 """Model class."""
 
 import os
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Dict, Any
 import numpy as np
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.models import Model as KerasModel
@@ -9,12 +9,19 @@ from tensorflow.keras.callbacks import History
 from tensorflow.keras.optimizers import Optimizer, RMSprop
 
 from dataset.dataset import Dataset, TRAIN_KEY, VAL_KEY, TEST_KEY
-from dataset.dataset_sequence import DatasetSequence, DEFAULT_BATCH_SIZE
+from dataset.image_dataset_sequence import ImageDatasetSequence, \
+    DEFAULT_BATCH_SIZE
 
-DEFAULT_EPOCHS = 10
+DEFAULT_TRAIN_ARGS = {
+    'batch_size': DEFAULT_BATCH_SIZE,
+    'epochs': 10,
+    'shuffle': True,
+    'augment_val': True,
+    'early_stopping': True
+}
 
 
-class Model:
+class ProjectModel:
     """Represents an ML model that can be trained and make predictions."""
 
     def __init__(self, dataset: Dataset, network: KerasModel) -> None:
@@ -34,18 +41,15 @@ class Model:
         self.batch_augment_fn: Optional[Callable] = None
         self.batch_format_fn: Optional[Callable] = None
 
-    def fit(self, batch_size: int = DEFAULT_BATCH_SIZE,
-            epochs: int = DEFAULT_EPOCHS, augment_val: bool = True,
+    def fit(self, train_args: Dict[str, Any],
             callbacks: List[Callback] = None) -> History:
         """Trains the model and returns the history.
-        :param batch_size: the number of examples in a batch.
-        :param epochs: the number of complete passes over the data.
-        :param augment_val: whether to apply the data augmentation
-        function to the validation data.
+        :param train_args: the training arguments.
         :param callbacks: a list of keras callbacks to use during
         training.
         :return: the training history.
         """
+        train_args = DEFAULT_TRAIN_ARGS.update(train_args)
         callbacks = [] if callbacks is None else callbacks
         self.network.compile(loss=self.loss, optimizer=self.optimizer,
                              metrics=self.metrics)
@@ -53,18 +57,21 @@ class Model:
         y_train = self.dataset.get_labels(x_train_filenames)
         x_val_filenames = self.dataset.partition[VAL_KEY]
         y_val = self.dataset.get_labels(x_val_filenames)
-        train_sequence = DatasetSequence(
-            x_train_filenames, y=y_train, batch_size=batch_size,
+        train_sequence = ImageDatasetSequence(
+            x_train_filenames, y=y_train, batch_size=train_args['batch_size'],
+            image_target_size=self.network.input_shape()[:2],
             batch_augment_fn=self.batch_augment_fn,
             batch_format_fn=self.batch_format_fn)
-        val_sequence = DatasetSequence(
-            x_val_filenames, y=y_val, batch_size=batch_size,
-            batch_augment_fn=self.batch_augment_fn if augment_val else None,
+        val_sequence = ImageDatasetSequence(
+            x_val_filenames, y=y_val, batch_size=train_args['batch_size'],
+            image_target_size=self.network.input_shape()[:2],
+            batch_augment_fn=self.batch_augment_fn if train_args['augment_val']
+            else None,
             batch_format_fn=self.batch_format_fn
         )
         return self.network.fit(
             x=train_sequence,
-            epochs=epochs,
+            epochs=train_args['epochs'],
             callbacks=callbacks,
             validation_data=val_sequence,
             use_multiprocessing=False,
@@ -82,7 +89,9 @@ class Model:
         :param batch_size: the number of examples in each batch.
         :return: the mean number of correct predictions.
         """
-        sequence = DatasetSequence(x_filenames, y=y, batch_size=batch_size)
+        sequence = ImageDatasetSequence(
+            x_filenames, y=y, batch_size=batch_size,
+            image_target_size=self.network.input_shape()[:2])
         preds = self.network.predict(sequence)
         return np.mean(np.argmax(preds, axis=-1) == np.argmax(y, axis=-1))
 
@@ -94,8 +103,19 @@ class Model:
         :param batch_size: the number of examples in each batch.
         :return: an np.ndarray of predicted classes.
         """
-        sequence = DatasetSequence(x_filenames, y=None, batch_size=batch_size)
+        sequence = ImageDatasetSequence(
+            x_filenames, y=None, batch_size=batch_size,
+            image_target_size=self.network.input_shape()[:2])
         return self.network.predict(sequence)
+
+    def predict_on_test(self,
+                        batch_size: int = DEFAULT_BATCH_SIZE) -> np.ndarray:
+        """Makes a prediction on the test dataset.
+        :param batch_size: the number of examples in each batch.
+        :return: an np.ndarray of predicted classes.
+        """
+        return self.predict(self.dataset.partition[TEST_KEY],
+                            batch_size=batch_size)
 
     def save_weights(self) -> None:
         """Saves the weights to the predefined file."""

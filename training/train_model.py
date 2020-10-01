@@ -10,13 +10,15 @@ from wandb.keras import WandbCallback
 from typing import List, Dict, Any
 from time import time
 
-from models.model import Model
-from dataset.dataset import Dataset
+from models.project_model import ProjectModel, DEFAULT_TRAIN_ARGS
+from dataset.ilsvrc_dataset import ILSVRCDataset, DEFAULT_DATASET_PATH, \
+    EXPECTED_NUM_CLASSES
+from dataset.image_dataset_sequence import DEFAULT_TARGET_SIZE
+from models.networks.mlp import MLP
 
-EARLY_STOPPING = True
-DEFAULT_TRAIN_ARGS = {
-    'batch_size': 32,
-    'epochs': 10
+DEFAULT_NETWORK_ARGS = {
+    'input_shape': DEFAULT_TARGET_SIZE + (3,),
+    'num_classes': EXPECTED_NUM_CLASSES
 }
 
 
@@ -28,23 +30,28 @@ def get_custom_wandb_callbacks() -> List[Callback]:
     return []
 
 
-def get_model() -> Model:
-    """Returns the model."""
+def get_model(network_args: Dict[str, Any]) -> ProjectModel:
+    """Returns the model.
+    :param network_args: the network arguments; see DEFAULT_NETWORK_ARGS for
+    available arguments.
+    :return: the model.
+    """
+    dataset = ILSVRCDataset(DEFAULT_DATASET_PATH)
+    network_args = DEFAULT_NETWORK_ARGS.update(network_args)
+    network = MLP(network_args['input_shape'], network_args['num_classes'])
+    return ProjectModel(dataset, network)
 
 
-def train_model(model: Model, dataset: Dataset, train_args: Dict[str, Any],
-                augment_val: bool = True, use_wandb: bool = False) -> None:
+def train_model(model: ProjectModel, train_args: Dict[str, Any],
+                use_wandb: bool = False) -> None:
     """Trains the model.
     :param model: the model to train.
-    :param dataset: the dataset on which to train.
     :param train_args: training arguments; see DEFAULT_TRAIN_ARGS for
     available arguments.
-    :param augment_val: whether to use data augmentation on the val
-    dataset.
     :param use_wandb: whether to sync the training run to wandb.
     """
     callbacks = []
-    if EARLY_STOPPING:
+    if train_args['early_stopping']:
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=0.01,
                                        patience=3, verbose=1, mode='auto')
         callbacks.append(early_stopping)
@@ -54,19 +61,17 @@ def train_model(model: Model, dataset: Dataset, train_args: Dict[str, Any],
     train_args = DEFAULT_TRAIN_ARGS.update(train_args)
     model.network.summary()
     t_start = time()
-    _history = model.fit(
-        dataset,
-        batch_size=train_args['batch_size'],
-        epochs=train_args['epochs'],
-        augment_val=augment_val,
-        callbacks=callbacks
-    )
+    _history = model.fit(train_args, callbacks=callbacks)
     t_end = time()
     print('Model training finished in {0:2f}s'.format(t_end - t_start))
 
 
 def main() -> None:
     """Runs the program."""
+    # TODO actually use network_args
+    model = get_model({})
+    # TODO actually use train_args
+    train_model(model, {})
 
 
 if __name__ == '__main__':
