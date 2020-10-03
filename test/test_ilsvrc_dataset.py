@@ -13,7 +13,7 @@ def dataset() -> ILSVRCDataset:
     return ILSVRCDataset(DEFAULT_DATASET_PATH)
 
 
-def test_label_mapping(dataset) -> None:
+def test_label_mapping(dataset: ILSVRCDataset) -> None:
     """Tests that the ILSVRCDataset's label mapping is correct. In
     particular, there should be 1000 classes with descriptive class
     names; synset IDs should correspond to correct classnames; and
@@ -35,7 +35,7 @@ def test_label_mapping(dataset) -> None:
         assert dataset.classname_to_label[classname] == label_idx
 
 
-def test_partition(dataset) -> None:
+def test_partition(dataset: ILSVRCDataset) -> None:
     """Tests that ILSVRCDataset's partition is filled correctly. In
     particular, the filepaths should point to the correct files and
     the train/val labels should be correct."""

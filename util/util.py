@@ -19,6 +19,7 @@ def set_random_seed(random_seed: int = RANDOM_SEED) -> None:
     base_random_seed(random_seed)
     seed(random_seed)
     set_seed(random_seed)
+    print('Random seed set')
 
 
 def get_max_batch_size(x_filenames: np.ndarray) -> int:

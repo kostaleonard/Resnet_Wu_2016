@@ -71,9 +71,7 @@ class ImageDatasetSequence(Sequence):
                                  'true.')
             idx = 0
         batch_start = idx * self.batch_size
-        if batch_start >= self.x_filenames.shape[0] - 1:
-            raise ValueError('Batch starting index too large for dataset.')
-        batch_end = min((idx + 1) * self.batch_size, self.x_filenames.shape[0])
+        batch_end = (idx + 1) * self.batch_size
         batch_x_filenames = self.x_filenames[batch_start:batch_end]
         batch_x = np.array([img_to_array(load_img(
             filename, target_size=self.image_target_size), dtype=np.uint8)

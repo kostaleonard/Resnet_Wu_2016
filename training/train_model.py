@@ -5,7 +5,7 @@ USE_RANDOM_SEED = True
 if USE_RANDOM_SEED:
     set_random_seed()
 # pylint: disable=wrong-import-position
-from tensorflow.keras.callbacks import EarlyStopping, Callback
+from tensorflow.keras.callbacks import EarlyStopping, Callback, History
 from wandb.keras import WandbCallback
 from typing import List, Dict, Any
 from time import time
@@ -62,12 +62,13 @@ def get_model(dataset_args: Dict[str, Any],
 
 
 def train_model(model: ProjectModel, train_args: Dict[str, Any],
-                use_wandb: bool = False) -> None:
+                use_wandb: bool = False) -> History:
     """Trains the model.
     :param model: the model to train.
     :param train_args: training arguments; see DEFAULT_TRAIN_ARGS for
     available arguments.
     :param use_wandb: whether to sync the training run to wandb.
+    :return: the training history.
     """
     train_args = {**DEFAULT_TRAIN_ARGS, **train_args}
     print('Training args: {0}'.format(train_args))
@@ -81,9 +82,10 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
         callbacks.extend(get_custom_wandb_callbacks())
     model.network.summary()
     t_start = time()
-    _history = model.fit(train_args, callbacks=callbacks)
+    history = model.fit(train_args, callbacks=callbacks)
     t_end = time()
     print('Model training finished in {0:2f}s'.format(t_end - t_start))
+    return history
 
 
 def main() -> None:

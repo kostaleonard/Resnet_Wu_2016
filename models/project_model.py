@@ -91,6 +91,7 @@ class ProjectModel:
         :param batch_size: the number of examples in each batch.
         :return: the mean number of correct predictions.
         """
+        # TODO y should be categorical.
         sequence = ImageDatasetSequence(
             x_filenames, y=y, batch_size=batch_size,
             image_target_size=self.network.input_shape()[:2])
