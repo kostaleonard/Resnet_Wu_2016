@@ -1,5 +1,9 @@
-"""Tests the train_model module."""
+"""Tests that training results are reproducible.
+Don't add any other tests, because that could mess with the random seeding."""
 
+from dataset.ilsvrc_dataset import ILSVRCDataset, DEFAULT_DATASET_PATH
+from models.networks.mlp import MLP
+from models.project_model import ProjectModel
 from training import train_model
 from util.util import set_random_seed
 
@@ -11,8 +15,12 @@ def test_training_reproducible() -> None:
     """Tests that training results are reproducible."""
     set_random_seed(SEED)
     dataset_args = {'dataset_fraction': 0.001}
-    network_args = {}
+    network_args = {'input_shape': (128, 128, 3),
+                    'num_classes': 1000}
     train_args = {'epochs': 10, 'batch_size': 32}
-    model = train_model.get_model(dataset_args, network_args)
+    dataset = ILSVRCDataset(DEFAULT_DATASET_PATH)
+    dataset.trim_dataset(dataset_args['dataset_fraction'])
+    network = MLP(network_args['input_shape'], network_args['num_classes'])
+    model = ProjectModel(dataset, network)
     history = train_model.train_model(model, train_args)
     assert str(history.history) == SEED_HISTORY
