@@ -2,7 +2,10 @@
 
 # Random seeds need to be set up at program launch, before other
 # imports, because some libraries use random initialization.
+import os
+from random import seed as base_random_seed
 from numpy.random import seed
+from tensorflow._api.v2.random import set_seed
 import numpy as np
 
 RANDOM_SEED = 52017
@@ -12,7 +15,10 @@ def set_random_seed(random_seed: int = RANDOM_SEED) -> None:
     """Sets up the random seed so that experiments are reproducible.
     :param random_seed: the random seed to use.
     """
+    os.environ['PYTHONHASHSEED'] = str(random_seed)
+    base_random_seed(random_seed)
     seed(random_seed)
+    set_seed(random_seed)
 
 
 def get_max_batch_size(x_filenames: np.ndarray) -> int:
