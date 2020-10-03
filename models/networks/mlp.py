@@ -1,8 +1,8 @@
 """An MLP Keras Model."""
 
 from typing import Tuple
-from keras.models import Sequential
-from keras.layers import Flatten, Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Flatten, Dense, Dropout
 
 
 class MLP(Sequential):

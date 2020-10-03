@@ -31,7 +31,7 @@ class ProjectModel:
         """
         self.dataset: Dataset = dataset
         self.network: KerasModel = network
-        self.loss: str = 'categorical crossentropy'
+        self.loss: str = 'categorical_crossentropy'
         self.optimizer: Optimizer = RMSprop()
         self.metrics: List[str] = ['accuracy']
         self.weights_filename = os.path.join('saved', '{0}_{1}_{2}'.format(
@@ -49,22 +49,24 @@ class ProjectModel:
         training.
         :return: the training history.
         """
-        train_args = DEFAULT_TRAIN_ARGS.update(train_args)
+        train_args = {**DEFAULT_TRAIN_ARGS, **train_args}
         callbacks = [] if callbacks is None else callbacks
         self.network.compile(loss=self.loss, optimizer=self.optimizer,
                              metrics=self.metrics)
         x_train_filenames = self.dataset.partition[TRAIN_KEY]
-        y_train = self.dataset.get_labels(x_train_filenames)
+        y_train = self.dataset.get_labels(x_train_filenames, True,
+                                          self.network.output_shape[1])
         x_val_filenames = self.dataset.partition[VAL_KEY]
-        y_val = self.dataset.get_labels(x_val_filenames)
+        y_val = self.dataset.get_labels(x_val_filenames, True,
+                                        self.network.output_shape[1])
         train_sequence = ImageDatasetSequence(
             x_train_filenames, y=y_train, batch_size=train_args['batch_size'],
-            image_target_size=self.network.input_shape()[:2],
+            image_target_size=self.network.input_shape[1:3],
             batch_augment_fn=self.batch_augment_fn,
             batch_format_fn=self.batch_format_fn)
         val_sequence = ImageDatasetSequence(
             x_val_filenames, y=y_val, batch_size=train_args['batch_size'],
-            image_target_size=self.network.input_shape()[:2],
+            image_target_size=self.network.input_shape[1:3],
             batch_augment_fn=self.batch_augment_fn if train_args['augment_val']
             else None,
             batch_format_fn=self.batch_format_fn

@@ -14,8 +14,12 @@ from models.project_model import ProjectModel, DEFAULT_TRAIN_ARGS
 from dataset.ilsvrc_dataset import ILSVRCDataset, DEFAULT_DATASET_PATH, \
     EXPECTED_NUM_CLASSES
 from dataset.image_dataset_sequence import DEFAULT_TARGET_SIZE
+from dataset.dataset import TRAIN_KEY, VAL_KEY, TEST_KEY
 from models.networks.mlp import MLP
 
+DEFAULT_DATASET_ARGS = {
+    'dataset_fraction': 0.01
+}
 DEFAULT_NETWORK_ARGS = {
     'input_shape': DEFAULT_TARGET_SIZE + (3,),
     'num_classes': EXPECTED_NUM_CLASSES
@@ -30,14 +34,29 @@ def get_custom_wandb_callbacks() -> List[Callback]:
     return []
 
 
-def get_model(network_args: Dict[str, Any]) -> ProjectModel:
+def get_model(dataset_args: Dict[str, Any],
+              network_args: Dict[str, Any]) -> ProjectModel:
     """Returns the model.
+    :param dataset_args: the dataset arguments; see DEFAULT_DATASET_ARGS for
+    available arguments.
     :param network_args: the network arguments; see DEFAULT_NETWORK_ARGS for
     available arguments.
     :return: the model.
     """
+    dataset_args = {**DEFAULT_DATASET_ARGS, **dataset_args}
+    network_args = {**DEFAULT_NETWORK_ARGS, **network_args}
+    print('Dataset args: {0}'.format(dataset_args))
+    print('Network args: {0}'.format(network_args))
+    print('Loading dataset from {0}'.format(DEFAULT_DATASET_PATH))
     dataset = ILSVRCDataset(DEFAULT_DATASET_PATH)
-    network_args = DEFAULT_NETWORK_ARGS.update(network_args)
+    if dataset_args['dataset_fraction'] < 1.0:
+        dataset.trim_dataset(dataset_args['dataset_fraction'])
+    print('Num training examples: {0}'.format(
+        dataset.partition[TRAIN_KEY].shape[0]))
+    print('Num validation examples: {0}'.format(
+        dataset.partition[VAL_KEY].shape[0]))
+    print('Num test examples: {0}'.format(
+        dataset.partition[TEST_KEY].shape[0]))
     network = MLP(network_args['input_shape'], network_args['num_classes'])
     return ProjectModel(dataset, network)
 
@@ -50,6 +69,8 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
     available arguments.
     :param use_wandb: whether to sync the training run to wandb.
     """
+    train_args = {**DEFAULT_TRAIN_ARGS, **train_args}
+    print('Training args: {0}'.format(train_args))
     callbacks = []
     if train_args['early_stopping']:
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=0.01,
@@ -58,7 +79,6 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
     if use_wandb:
         callbacks.append(WandbCallback())
         callbacks.extend(get_custom_wandb_callbacks())
-    train_args = DEFAULT_TRAIN_ARGS.update(train_args)
     model.network.summary()
     t_start = time()
     _history = model.fit(train_args, callbacks=callbacks)
@@ -69,7 +89,7 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
 def main() -> None:
     """Runs the program."""
     # TODO actually use network_args
-    model = get_model({})
+    model = get_model({}, {})
     # TODO actually use train_args
     train_model(model, {})
 
