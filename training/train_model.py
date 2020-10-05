@@ -90,7 +90,7 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
 
 def main() -> None:
     """Runs the program."""
-    # TODO actually use network_args
+    # TODO actually use dataset_args, network_args
     model = get_model({}, {})
     # TODO actually use train_args
     train_model(model, {})
