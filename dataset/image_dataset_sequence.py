@@ -9,7 +9,6 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from util.util import get_max_batch_size, normalize_images
 
 DEFAULT_BATCH_SIZE = 32
-SHUFFLE_ON_EPOCH_END = False
 CHECK_MAX_BATCH_SIZE = True
 DEFAULT_TARGET_SIZE = (128, 128)
 
@@ -23,7 +22,8 @@ class ImageDatasetSequence(Sequence):
                  batch_size: int = DEFAULT_BATCH_SIZE,
                  batch_augment_fn: Optional[Callable] = None,
                  batch_format_fn: Optional[Callable] = None,
-                 overfit_single_batch: bool = False) -> None:
+                 overfit_single_batch: bool = False,
+                 shuffle_on_batch_end: bool = True) -> None:
         """Instantiates the object.
         :param x_filenames: ndarray of strs containing the filenames of
         all examples in the dataset.
@@ -42,6 +42,9 @@ class ImageDatasetSequence(Sequence):
         set up correctly, then you should be able to achieve a training loss
         arbitrarily close to zero after many epochs. Generally used only on the
         train set.
+        :param shuffle_on_batch_end: whether to shuffle the sequence on epoch end.
+        tensorflow's model.fit has a shuffle flag, but it does not work on
+        generators, so we need it here.
         """
         # pylint: disable=invalid-name
         if y is None:
@@ -56,6 +59,7 @@ class ImageDatasetSequence(Sequence):
         self.batch_augment_fn: Optional[Callable] = batch_augment_fn
         self.batch_format_fn: Optional[Callable] = batch_format_fn
         self.overfit_single_batch: bool = overfit_single_batch
+        self.shuffle_on_batch_end = shuffle_on_batch_end
         if CHECK_MAX_BATCH_SIZE:
             print('Estimated maximum batch size: {0}'.format(
                 get_max_batch_size(x_filenames)))
@@ -73,14 +77,11 @@ class ImageDatasetSequence(Sequence):
         (features) and the batch labels, respectively.
         """
         if self.overfit_single_batch:
-            if SHUFFLE_ON_EPOCH_END:
+            if self.shuffle_on_batch_end:
                 raise ValueError('Cannot overfit on one batch if shuffling is '
                                  'true.')
             idx = 0
-        # Tests for shuffling:
-        #if idx == 0:
-        #   print('First file in epoch: {0}'.format(self.x_filenames[0]))
-
+        # TODO write a test to check for correct shuffling.
         batch_start = idx * self.batch_size
         batch_end = (idx + 1) * self.batch_size
         batch_x_filenames = self.x_filenames[batch_start:batch_end]
@@ -98,8 +99,7 @@ class ImageDatasetSequence(Sequence):
     def on_epoch_end(self) -> None:
         """Performs actions that happen at the end of every epoch, e.g.
         shuffling."""
-        if SHUFFLE_ON_EPOCH_END:
-            # TODO this seems superfluous since model.fit has a shuffle flag. Docs are unclear, so test out.
+        if self.shuffle_on_batch_end:
             self.shuffle()
 
     def shuffle(self) -> None:

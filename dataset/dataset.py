@@ -70,15 +70,23 @@ class Dataset:
         :param trim_val: whether to trim the validation set.
         :param trim_test: whether to trim the test set.
         """
+        train_indices = np.arange(self.partition[TRAIN_KEY].shape[0])
+        val_indices = np.arange(self.partition[VAL_KEY].shape[0])
+        test_indices = np.arange(self.partition[TEST_KEY].shape[0])
+        np.random.shuffle(train_indices)
+        np.random.shuffle(val_indices)
+        np.random.shuffle(test_indices)
         if trim_train:
-            end_idx = int(self.partition[TRAIN_KEY].shape[0]
-                          * target_dataset_fraction)
-            self.partition[TRAIN_KEY] = self.partition[TRAIN_KEY][:end_idx]
+            end_idx = int(train_indices.shape[0] * target_dataset_fraction)
+            selected_indices = train_indices[:end_idx]
+            self.partition[TRAIN_KEY] = self.partition[TRAIN_KEY][
+                selected_indices]
         if trim_val:
-            end_idx = int(self.partition[VAL_KEY].shape[0]
-                          * target_dataset_fraction)
-            self.partition[VAL_KEY] = self.partition[VAL_KEY][:end_idx]
+            end_idx = int(val_indices.shape[0] * target_dataset_fraction)
+            selected_indices = val_indices[:end_idx]
+            self.partition[VAL_KEY] = self.partition[VAL_KEY][selected_indices]
         if trim_test:
-            end_idx = int(self.partition[TEST_KEY].shape[0]
-                          * target_dataset_fraction)
-            self.partition[TEST_KEY] = self.partition[TEST_KEY][:end_idx]
+            end_idx = int(test_indices.shape[0] * target_dataset_fraction)
+            selected_indices = test_indices[:end_idx]
+            self.partition[TEST_KEY] = self.partition[TEST_KEY][
+                selected_indices]
