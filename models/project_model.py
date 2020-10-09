@@ -17,7 +17,8 @@ DEFAULT_TRAIN_ARGS = {
     'epochs': 10,
     'shuffle': True,
     'augment_val': True,
-    'early_stopping': True
+    'early_stopping': True,
+    'overfit_single_batch': False
 }
 
 
@@ -63,7 +64,9 @@ class ProjectModel:
             x_train_filenames, y=y_train, batch_size=train_args['batch_size'],
             image_target_size=self.network.input_shape[1:3],
             batch_augment_fn=self.batch_augment_fn,
-            batch_format_fn=self.batch_format_fn)
+            batch_format_fn=self.batch_format_fn,
+            overfit_single_batch=train_args['overfit_single_batch']
+        )
         val_sequence = ImageDatasetSequence(
             x_val_filenames, y=y_val, batch_size=train_args['batch_size'],
             image_target_size=self.network.input_shape[1:3],

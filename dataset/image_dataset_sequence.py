@@ -8,9 +8,8 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
 from util.util import get_max_batch_size, normalize_images
 
-OVERFIT_ONE_BATCH = False
 DEFAULT_BATCH_SIZE = 32
-SHUFFLE_ON_EPOCH_END = True
+SHUFFLE_ON_EPOCH_END = False
 CHECK_MAX_BATCH_SIZE = True
 DEFAULT_TARGET_SIZE = (128, 128)
 
@@ -23,7 +22,8 @@ class ImageDatasetSequence(Sequence):
                  image_target_size: Tuple[int, int] = DEFAULT_TARGET_SIZE,
                  batch_size: int = DEFAULT_BATCH_SIZE,
                  batch_augment_fn: Optional[Callable] = None,
-                 batch_format_fn: Optional[Callable] = None) -> None:
+                 batch_format_fn: Optional[Callable] = None,
+                 overfit_single_batch: bool = False) -> None:
         """Instantiates the object.
         :param x_filenames: ndarray of strs containing the filenames of
         all examples in the dataset.
@@ -36,6 +36,12 @@ class ImageDatasetSequence(Sequence):
         :param batch_augment_fn: the function to augment a batch of
         data.
         :param batch_format_fn: the function to format a batch of data.
+        :param overfit_single_batch: if True, the sequence will always return
+        the first batch in the dataset. You can use this to validate the
+        training pipeline--if the dataset, network, and training regime are
+        set up correctly, then you should be able to achieve a training loss
+        arbitrarily close to zero after many epochs. Generally used only on the
+        train set.
         """
         # pylint: disable=invalid-name
         if y is None:
@@ -49,6 +55,7 @@ class ImageDatasetSequence(Sequence):
         self.batch_size: int = batch_size
         self.batch_augment_fn: Optional[Callable] = batch_augment_fn
         self.batch_format_fn: Optional[Callable] = batch_format_fn
+        self.overfit_single_batch: bool = overfit_single_batch
         if CHECK_MAX_BATCH_SIZE:
             print('Estimated maximum batch size: {0}'.format(
                 get_max_batch_size(x_filenames)))
@@ -65,11 +72,15 @@ class ImageDatasetSequence(Sequence):
         :return: a tuple of two np.ndarray objects, the batch x values
         (features) and the batch labels, respectively.
         """
-        if OVERFIT_ONE_BATCH:
+        if self.overfit_single_batch:
             if SHUFFLE_ON_EPOCH_END:
                 raise ValueError('Cannot overfit on one batch if shuffling is '
                                  'true.')
             idx = 0
+        # Tests for shuffling:
+        #if idx == 0:
+        #   print('First file in epoch: {0}'.format(self.x_filenames[0]))
+
         batch_start = idx * self.batch_size
         batch_end = (idx + 1) * self.batch_size
         batch_x_filenames = self.x_filenames[batch_start:batch_end]

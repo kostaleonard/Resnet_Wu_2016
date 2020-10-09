@@ -18,7 +18,7 @@ from dataset.dataset import TRAIN_KEY, VAL_KEY, TEST_KEY
 from models.networks.mlp import MLP
 
 DEFAULT_DATASET_ARGS = {
-    'dataset_fraction': 0.01
+    'dataset_fraction': 0.001
 }
 DEFAULT_NETWORK_ARGS = {
     'input_shape': DEFAULT_TARGET_SIZE + (3,),
@@ -93,7 +93,8 @@ def main() -> None:
     # TODO actually use dataset_args, network_args
     model = get_model({}, {})
     # TODO actually use train_args
-    train_model(model, {})
+    history = train_model(model, {})
+    print(history.history)
 
 
 if __name__ == '__main__':

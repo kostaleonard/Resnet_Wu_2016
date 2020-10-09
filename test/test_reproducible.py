@@ -1,5 +1,7 @@
 """Tests that training results are reproducible.
-Don't add any other tests, because that could mess with the random seeding."""
+Don't add any other tests, because that could mess with the random seeding.
+Also, updating packages can mess up the results, but they should still be the
+same every time."""
 
 from dataset.ilsvrc_dataset import ILSVRCDataset, DEFAULT_DATASET_PATH
 from models.networks.mlp import MLP
@@ -8,7 +10,7 @@ from training import train_model
 from util.util import set_random_seed
 
 SEED = 52017
-SEED_HISTORY = "{'loss': [6.61477518081665, 0.7118954062461853, 0.5890428423881531, 0.5843948125839233, 0.5031907558441162], 'accuracy': [0.7902321815490723, 0.8470776677131653, 0.872698187828064, 0.8598878979682922, 0.8855084180831909], 'val_loss': [15.476541519165039, 12.545025825500488, 16.130390167236328, 24.079486846923828, 38.36538314819336], 'val_accuracy': [0.0, 0.0, 0.0, 0.0, 0.0]}"
+SEED_HISTORY = "{'loss': [6.760105133056641, 1.0928313732147217, 1.2394728660583496, 0.8879892230033875], 'accuracy': [0.7902321815490723, 0.7870296239852905, 0.8126501441001892, 0.8462769985198975], 'val_loss': [15.447237968444824, 47.05992126464844, 22.719436645507812, 30.461416244506836], 'val_accuracy': [0.0, 0.0, 0.0, 0.0]}"
 
 
 def test_training_reproducible() -> None:
