@@ -23,7 +23,7 @@ class ImageDatasetSequence(Sequence):
                  batch_augment_fn: Optional[Callable] = None,
                  batch_format_fn: Optional[Callable] = None,
                  overfit_single_batch: bool = False,
-                 shuffle_on_batch_end: bool = True) -> None:
+                 shuffle_on_epoch_end: bool = True) -> None:
         """Instantiates the object.
         :param x_filenames: ndarray of strs containing the filenames of
         all examples in the dataset.
@@ -42,8 +42,8 @@ class ImageDatasetSequence(Sequence):
         set up correctly, then you should be able to achieve a training loss
         arbitrarily close to zero after many epochs. Generally used only on the
         train set.
-        :param shuffle_on_batch_end: whether to shuffle the sequence on epoch end.
-        tensorflow's model.fit has a shuffle flag, but it does not work on
+        :param shuffle_on_epoch_end: whether to shuffle the sequence on epoch
+        end. tensorflow's model.fit has a shuffle flag, but it does not work on
         generators, so we need it here.
         """
         # pylint: disable=invalid-name
@@ -59,7 +59,7 @@ class ImageDatasetSequence(Sequence):
         self.batch_augment_fn: Optional[Callable] = batch_augment_fn
         self.batch_format_fn: Optional[Callable] = batch_format_fn
         self.overfit_single_batch: bool = overfit_single_batch
-        self.shuffle_on_batch_end = shuffle_on_batch_end
+        self.shuffle_on_batch_end = shuffle_on_epoch_end
         if CHECK_MAX_BATCH_SIZE:
             print('Estimated maximum batch size: {0}'.format(
                 get_max_batch_size(x_filenames)))

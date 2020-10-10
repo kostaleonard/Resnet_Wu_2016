@@ -12,7 +12,9 @@ DELTA = 0.05
 
 @pytest.fixture
 def dataset() -> ILSVRCDataset:
-    """Returns an ILSVRCDataset."""
+    """Returns an ILSVRCDataset.
+    :return: the dataset.
+    """
     return ILSVRCDataset(DEFAULT_DATASET_PATH)
 
 

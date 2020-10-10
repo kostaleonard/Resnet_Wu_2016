@@ -15,13 +15,17 @@ BATCH_SIZE = 32
 
 @pytest.fixture
 def dataset() -> ILSVRCDataset:
-    """Returns an ILSVRCDataset."""
+    """Returns an ILSVRCDataset.
+    :return: the dataset.
+    """
     dataset = ILSVRCDataset(DEFAULT_DATASET_PATH)
     return dataset
 
 
 def test_images(dataset: ILSVRCDataset) -> None:
-    """Tests that the sequence output images meet expected standards."""
+    """Tests that the sequence output images meet expected standards.
+    :param dataset: the dataset.
+    """
     dataset.trim_dataset(DATASET_FRACTION)
     x_train_filenames = dataset.partition[TRAIN_KEY]
     y_train = dataset.get_labels(x_train_filenames, True, NUM_CLASSES)
@@ -31,7 +35,7 @@ def test_images(dataset: ILSVRCDataset) -> None:
         batch_augment_fn=None,
         batch_format_fn=None,
         overfit_single_batch=False,
-        shuffle_on_batch_end=True
+        shuffle_on_epoch_end=True
     )
     # Test that only the last batch is not of length BATCH_SIZE.
     # Also test that there are the correct number of batches.
@@ -55,9 +59,12 @@ def test_images(dataset: ILSVRCDataset) -> None:
     assert num_batches_seen == len(train_sequence)
 
 
-def test_shuffle() -> None:
+def test_shuffle(dataset: ILSVRCDataset) -> None:
     """Tests that the shuffling flag works as expected. Also tests that
-    filenames and labels are still properly mapped."""
+    filenames and labels are still properly mapped.
+    :param dataset: the dataset.
+    """
+    dataset.trim_dataset(DATASET_FRACTION)
     x_train_filenames = dataset.partition[TRAIN_KEY]
     y_train = dataset.get_labels(x_train_filenames, True, NUM_CLASSES)
     train_sequence = ImageDatasetSequence(
@@ -66,6 +73,48 @@ def test_shuffle() -> None:
         batch_augment_fn=None,
         batch_format_fn=None,
         overfit_single_batch=False,
-        shuffle_on_batch_end=True
+        shuffle_on_epoch_end=True
     )
+    # Test shuffle.
+    first_batch_before = train_sequence.__getitem__(0)
+    train_sequence.on_epoch_end()
+    first_batch_after = train_sequence.__getitem__(0)
+    assert (first_batch_before[0] != first_batch_after[0]).any()
+    # Test filename/label mappings.
     # TODO
+
+
+def test_overfit_single_batch(dataset: ILSVRCDataset) -> None:
+    """Tests that the same batch of images is always presented to the
+    model if overfitting on a single batch.
+    :param dataset: the dataset.
+    """
+    dataset.trim_dataset(DATASET_FRACTION)
+    x_train_filenames = dataset.partition[TRAIN_KEY]
+    y_train = dataset.get_labels(x_train_filenames, True, NUM_CLASSES)
+    # Test that you can't set overfit and shuffle flags together.
+    train_sequence = ImageDatasetSequence(
+        x_train_filenames, y=y_train, batch_size=BATCH_SIZE,
+        image_target_size=IMAGE_TARGET_SIZE,
+        batch_augment_fn=None,
+        batch_format_fn=None,
+        overfit_single_batch=True,
+        shuffle_on_epoch_end=True
+    )
+    with pytest.raises(ValueError):
+        for _ in train_sequence:
+            pass
+    # Test that you always get the same batch, even after multiple epochs.
+    train_sequence = ImageDatasetSequence(
+        x_train_filenames, y=y_train, batch_size=BATCH_SIZE,
+        image_target_size=IMAGE_TARGET_SIZE,
+        batch_augment_fn=None,
+        batch_format_fn=None,
+        overfit_single_batch=True,
+        shuffle_on_epoch_end=False
+    )
+    for batch in train_sequence:
+        assert (batch[0] == train_sequence.__getitem__(0)[0]).all()
+    train_sequence.on_epoch_end()
+    for batch in train_sequence:
+        assert (batch[0] == train_sequence.__getitem__(0)[0]).all()
