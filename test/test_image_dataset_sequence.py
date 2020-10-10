@@ -75,13 +75,25 @@ def test_shuffle(dataset: ILSVRCDataset) -> None:
         overfit_single_batch=False,
         shuffle_on_epoch_end=True
     )
+    img_to_label_before = {}
+    for batch in train_sequence:
+        x_batch, y_batch = batch
+        for i in range(x_batch.shape[0]):
+            img_data = tuple(x_batch[i].flatten())
+            label = tuple(y_batch[i])
+            img_to_label_before[img_data] = label
     # Test shuffle.
     first_batch_before = train_sequence.__getitem__(0)
     train_sequence.on_epoch_end()
     first_batch_after = train_sequence.__getitem__(0)
     assert (first_batch_before[0] != first_batch_after[0]).any()
     # Test filename/label mappings.
-    # TODO
+    for batch in train_sequence:
+        x_batch, y_batch = batch
+        for i in range(x_batch.shape[0]):
+            img_data = tuple(x_batch[i].flatten())
+            label = tuple(y_batch[i])
+            assert img_to_label_before[img_data] == label
 
 
 def test_overfit_single_batch(dataset: ILSVRCDataset) -> None:
@@ -113,8 +125,13 @@ def test_overfit_single_batch(dataset: ILSVRCDataset) -> None:
         overfit_single_batch=True,
         shuffle_on_epoch_end=False
     )
+    num_batches_epoch_1 = 0
     for batch in train_sequence:
         assert (batch[0] == train_sequence.__getitem__(0)[0]).all()
+        num_batches_epoch_1 += 1
     train_sequence.on_epoch_end()
+    num_batches_epoch_2 = 0
     for batch in train_sequence:
         assert (batch[0] == train_sequence.__getitem__(0)[0]).all()
+        num_batches_epoch_2 += 1
+    assert num_batches_epoch_1 == num_batches_epoch_2
