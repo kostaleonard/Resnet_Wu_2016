@@ -49,10 +49,16 @@ def test_images(dataset: ILSVRCDataset) -> None:
         assert x_batch[0].shape == IMAGE_TARGET_SIZE + (3,)
         # Check that the image is of the right datatype.
         assert x_batch.dtype == np.float32
+        # Check that the image is normalized.
+        assert (0.0 <= x_batch.flatten()).all()
+        assert (x_batch.flatten() <= 1.0).all()
         # Check that the label is categorical and of the right dimension.
         assert y_batch.shape[1] == NUM_CLASSES
         # Check that the label is of the right datatype.
         assert y_batch.dtype == np.float32
+        # Check that the label is one-hot.
+        for label in y_batch:
+            assert sum(label) == 1
         on_last_batch = not (x_batch.shape[0] == BATCH_SIZE and
                              y_batch.shape[0] == BATCH_SIZE)
         num_batches_seen += 1

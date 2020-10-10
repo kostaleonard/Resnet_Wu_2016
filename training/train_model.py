@@ -11,6 +11,7 @@ from typing import List, Dict, Any
 from time import time
 
 from models.project_model import ProjectModel, DEFAULT_TRAIN_ARGS
+from models.image_model import ImageModel
 from dataset.ilsvrc_dataset import ILSVRCDataset, DEFAULT_DATASET_PATH, \
     EXPECTED_NUM_CLASSES
 from dataset.image_dataset_sequence import DEFAULT_TARGET_SIZE
@@ -18,7 +19,7 @@ from dataset.dataset import TRAIN_KEY, VAL_KEY, TEST_KEY
 from models.networks.mlp import MLP
 
 DEFAULT_DATASET_ARGS = {
-    'dataset_fraction': 0.001
+    'dataset_fraction': 0.01
 }
 DEFAULT_NETWORK_ARGS = {
     'input_shape': DEFAULT_TARGET_SIZE + (3,),
@@ -58,7 +59,7 @@ def get_model(dataset_args: Dict[str, Any],
     print('Num test examples: {0}'.format(
         dataset.partition[TEST_KEY].shape[0]))
     network = MLP(network_args['input_shape'], network_args['num_classes'])
-    return ProjectModel(dataset, network)
+    return ImageModel(dataset, network)
 
 
 def train_model(model: ProjectModel, train_args: Dict[str, Any],
