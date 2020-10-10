@@ -5,6 +5,7 @@ import pytest
 from training import train_model
 
 NUM_CLASSES = 1000
+OVERFIT_SINGLE_BATCH_TARGET_LOSS = 0.001
 
 
 def test_get_model() -> None:
@@ -53,4 +54,22 @@ def test_train_model() -> None:
 
 def test_overfit_single_batch() -> None:
     """Tests that the model can overfit on a single batch."""
-    # TODO
+    dataset_args = {'dataset_fraction': 0.01}
+    network_args = {'input_shape': (32, 32, 3),
+                    'num_classes': NUM_CLASSES}
+    train_args = {
+        'batch_size': 32,
+        'epochs': 30,
+        'early_stopping': False,
+        'overfit_single_batch': True,
+        'shuffle_on_epoch_end': False
+    }
+    model = train_model.get_model(dataset_args, network_args)
+    history = train_model.train_model(model, train_args)
+    loss_by_epoch = history.history['loss']
+    acc_by_epoch = history.history['accuracy']
+    # Test that training improved loss and accuracy.
+    assert loss_by_epoch[0] > loss_by_epoch[-1]
+    assert acc_by_epoch[0] < acc_by_epoch[-1]
+    # Test that we can get training loss arbitrarily low.
+    assert loss_by_epoch[-1] < OVERFIT_SINGLE_BATCH_TARGET_LOSS

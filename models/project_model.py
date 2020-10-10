@@ -15,7 +15,6 @@ from dataset.image_dataset_sequence import ImageDatasetSequence, \
 DEFAULT_TRAIN_ARGS = {
     'batch_size': DEFAULT_BATCH_SIZE,
     'epochs': 10,
-    'shuffle': True,
     'augment_val': True,
     'early_stopping': True,
     'overfit_single_batch': False,
