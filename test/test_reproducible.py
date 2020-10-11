@@ -19,10 +19,10 @@ def test_training_reproducible() -> None:
     dataset_args = {'dataset_fraction': 0.001}
     network_args = {'input_shape': (128, 128, 3),
                     'num_classes': 1000}
-    train_args = {'epochs': 10, 'batch_size': 32}
+    train_args = {'epochs': 10, 'batch_size': 32, 'early_stopping': True}
     dataset = ILSVRCDataset(DEFAULT_DATASET_PATH)
     dataset.trim_dataset(dataset_args['dataset_fraction'])
-    network = MLP(network_args['input_shape'], network_args['num_classes'])
+    network = MLP(network_args)
     model = ProjectModel(dataset, network)
     history = train_model.train_model(model, train_args)
     assert str(history.history) == SEED_HISTORY

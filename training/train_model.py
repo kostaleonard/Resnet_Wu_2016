@@ -17,11 +17,15 @@ from dataset.ilsvrc_dataset import ILSVRCDataset, DEFAULT_DATASET_PATH, \
 from dataset.image_dataset_sequence import DEFAULT_TARGET_SIZE
 from dataset.dataset import TRAIN_KEY, VAL_KEY, TEST_KEY
 from models.networks.mlp import MLP
+from models.networks.lenet import LeNet
 
+ARCHITECTURE_MLP = 'mlp'
+ARCHITECTURE_LENET = 'lenet'
 DEFAULT_DATASET_ARGS = {
     'dataset_fraction': 0.01
 }
 DEFAULT_NETWORK_ARGS = {
+    'architecture': ARCHITECTURE_MLP,
     'input_shape': DEFAULT_TARGET_SIZE + (3,),
     'num_classes': EXPECTED_NUM_CLASSES
 }
@@ -58,7 +62,13 @@ def get_model(dataset_args: Dict[str, Any],
         dataset.partition[VAL_KEY].shape[0]))
     print('Num test examples: {0}'.format(
         dataset.partition[TEST_KEY].shape[0]))
-    network = MLP(network_args['input_shape'], network_args['num_classes'])
+    if network_args['architecture'] == ARCHITECTURE_MLP:
+        network = MLP(network_args)
+    elif network_args['architecture'] == ARCHITECTURE_LENET:
+        network = LeNet(network_args)
+    else:
+        raise ValueError('Unrecognized architecture: {0}'.format(
+            network_args['architecture']))
     return ImageModel(dataset, network)
 
 
@@ -92,7 +102,7 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
 def main() -> None:
     """Runs the program."""
     # TODO actually use dataset_args, network_args
-    model = get_model({}, {})
+    model = get_model({}, {'architecture': ARCHITECTURE_LENET})
     # TODO actually use train_args
     history = train_model(model, {})
     print(history.history)

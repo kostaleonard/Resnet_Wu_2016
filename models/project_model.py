@@ -16,7 +16,7 @@ DEFAULT_TRAIN_ARGS = {
     'batch_size': DEFAULT_BATCH_SIZE,
     'epochs': 10,
     'augment_val': True,
-    'early_stopping': True,
+    'early_stopping': False,
     'overfit_single_batch': False,
     'shuffle_on_epoch_end': True
 }
