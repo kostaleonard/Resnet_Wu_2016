@@ -3,6 +3,7 @@
 import pytest
 
 from training import train_model
+from training.train_model import ARCHITECTURE_LENET
 
 NUM_CLASSES = 1000
 OVERFIT_SINGLE_BATCH_TARGET_LOSS = 0.001
@@ -55,8 +56,11 @@ def test_train_model() -> None:
 def test_overfit_single_batch() -> None:
     """Tests that the model can overfit on a single batch."""
     dataset_args = {'dataset_fraction': 0.01}
-    network_args = {'input_shape': (32, 32, 3),
-                    'num_classes': NUM_CLASSES}
+    network_args = {
+        'architecture': ARCHITECTURE_LENET,
+        'input_shape': (32, 32, 3),
+        'num_classes': NUM_CLASSES
+    }
     train_args = {
         'batch_size': 32,
         'epochs': 30,
