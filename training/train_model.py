@@ -9,6 +9,8 @@ from tensorflow.keras.callbacks import EarlyStopping, Callback, History
 from wandb.keras import WandbCallback
 from typing import List, Dict, Any
 from time import time
+import argparse
+import json
 
 from models.project_model import ProjectModel, DEFAULT_TRAIN_ARGS
 from models.image_model import ImageModel
@@ -72,13 +74,11 @@ def get_model(dataset_args: Dict[str, Any],
     return ImageModel(dataset, network)
 
 
-def train_model(model: ProjectModel, train_args: Dict[str, Any],
-                use_wandb: bool = False) -> History:
+def train_model(model: ProjectModel, train_args: Dict[str, Any]) -> History:
     """Trains the model.
     :param model: the model to train.
     :param train_args: training arguments; see DEFAULT_TRAIN_ARGS for
     available arguments.
-    :param use_wandb: whether to sync the training run to wandb.
     :return: the training history.
     """
     train_args = {**DEFAULT_TRAIN_ARGS, **train_args}
@@ -88,7 +88,7 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=0.01,
                                        patience=3, verbose=1, mode='auto')
         callbacks.append(early_stopping)
-    if use_wandb:
+    if train_args['use_wandb']:
         callbacks.append(WandbCallback())
         callbacks.extend(get_custom_wandb_callbacks())
     model.network.summary()
@@ -99,12 +99,40 @@ def train_model(model: ProjectModel, train_args: Dict[str, Any],
     return history
 
 
+def parse_args() -> argparse.Namespace:
+    """Returns the command line arguments.
+    :return: the command line arguments.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--gpu', type=int, default=0,
+        help='The index of the GPU to use. If the system has no GPUs, this '
+             'argument is ignored.'
+    )
+    parser.add_argument(
+        '--dataset_args', type=str, default='{}',
+        help='The dataset arguments, as a JSON dictionary.'
+    )
+    parser.add_argument(
+        '--network_args', type=str, default='{}',
+        help='The network arguments, as a JSON dictionary.'
+    )
+    parser.add_argument(
+        '--train_args', type=str, default='{}',
+        help='The training arguments, as a JSON dictionary.'
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
     """Runs the program."""
-    # TODO actually use dataset_args, network_args
-    model = get_model({}, {'architecture': ARCHITECTURE_LENET})
-    # TODO actually use train_args
-    history = train_model(model, {})
+    args = parse_args()
+    # TODO GPU assignment.
+    dataset_args = json.loads(args.dataset_args)
+    network_args = json.loads(args.network_args)
+    train_args = json.loads(args.train_args)
+    model = get_model(dataset_args, network_args)
+    history = train_model(model, train_args)
     print(history.history)
 
 

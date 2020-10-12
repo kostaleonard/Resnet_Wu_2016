@@ -18,7 +18,9 @@ DEFAULT_TRAIN_ARGS = {
     'augment_val': True,
     'early_stopping': False,
     'overfit_single_batch': False,
-    'shuffle_on_epoch_end': True
+    'shuffle_on_epoch_end': True,
+    'use_wandb': False,
+    'save_model': False
 }
 
 
